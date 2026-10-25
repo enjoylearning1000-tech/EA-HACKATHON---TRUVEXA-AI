@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-navy-950: #071426;
+    --bg-navy-900: #0B1F38;
+    --bg-navy-800: #0F2748;
+    --bg-navy-700: #15345F;
+    --cyan-glow: #00D4FF;
+    --blue-accent: #2563EB;
+    --evidence-green: #10B981;
+    --uncertain-amber: #F59E0B;
+    --contradict-red: #EF4444;
+  }
+}
+
+/* Custom glowing effects and animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.45), inset 0 0 20px rgba(0, 212, 255, 0.2);
+  }
+}
+
+@keyframes beamScan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+/* Custom Scrollbar for Intelligence Panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #071426;
+}
+::-webkit-scrollbar-thumb {
+  background: #15345F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00D4FF;
+}
+
+/* Glassmorphism panel styles */
+.glass-panel {
+  background: rgba(11, 31, 56, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s ease-in-out;
+}
+.glass-panel-hover:hover {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 212, 255, 0.1);
+  transform: translateY(-2px);
+}

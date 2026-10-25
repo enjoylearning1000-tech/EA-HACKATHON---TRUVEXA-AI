@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRUVEXA AI — 1-Minute Animated Explainer Video</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @keyframes pulseCyan {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+      50% { box-shadow: 0 0 35px rgba(0, 212, 255, 0.6); }
+    }
+    .glow-cyan {
+      animation: pulseCyan 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#040D1A] text-white font-sans p-2 md:p-6 antialiased flex flex-col items-center justify-center min-h-screen">
+
+  <div class="w-full max-w-4xl bg-[#071426] border border-cyan-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+    <!-- Header -->
+    <div class="px-5 py-3.5 bg-[#0B1F38] border-b border-cyan-900/60 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-[#00D4FF] font-bold">
+          ▲
+        </div>
+        <div>
+          <h1 class="text-sm font-extrabold tracking-wider text-white">
+            TRUVEXA <span class="text-[#00D4FF]">AI</span> · 60-Second Video Explainer
+          </h1>
+          <p class="text-[11px] text-cyan-300/70 font-mono">Animated Product Overview & Architecture</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="voiceToggleBtn" class="px-3 py-1 text-xs rounded-lg bg-cyan-950 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 transition-colors flex items-center gap-1.5 font-medium">
+          <span id="voiceIcon">🔊</span>
+          <span id="voiceLabel">Voiceover: ON</span>
+        </button>
+        <button id="recordBtn" class="px-3 py-1 text-xs rounded-lg bg-rose-950 border border-rose-500/50 text-rose-300 hover:bg-rose-900/60 transition-colors flex items-center gap-1.5 font-medium">
+          <span>⏺</span>
+          <span id="recordLabel">Export Video File</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Video Canvas Stage (16:9) -->
+    <div class="relative w-full aspect-video bg-[#040D1A] flex items-center justify-center overflow-hidden">
+      <canvas id="videoCanvas" width="1280" height="720" class="w-full h-full object-contain"></canvas>
+
+      <!-- Overlay Play Button when paused at start -->
+      <div id="playOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer transition-opacity">
+        <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-[#00D4FF] flex items-center justify-center text-slate-950 text-3xl font-black shadow-[0_0_40px_rgba(0,212,255,0.6)] transform hover:scale-110 transition-transform">
+          ▶
+        </div>
+        <p class="mt-4 text-sm font-bold tracking-wider text-white">Click to Play 60-Second Explainer</p>
+        <p class="text-xs text-cyan-300/80 font-mono mt-1">Complete with animated scenes & voice narration</p>
+      </div>
+
+      <!-- Live Subtitle Closed Captions Bar -->
+      <div id="ccBar" class="absolute bottom-4 inset-x-8 text-center px-4 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-cyan-500/30 text-xs md:text-sm text-cyan-100 font-medium transition-all">
+        Loading TRUVEXA AI narration...
+      </div>
+    </div>
+
+    <!-- Timeline & Controls -->
+    <div class="p-4 bg-[#0B1F38] border-t border-cyan-900/60 flex flex-col gap-2">
+      <!-- Progress Bar & Scrubber -->
+      <div class="flex items-center gap-3">
+        <span id="currentTimeLabel" class="text-xs font-mono text-cyan-400 w-10 text-right">0:00</span>
+        <div id="timelineTrack" class="flex-1 h-2.5 bg-[#071426] rounded-full overflow-hidden cursor-pointer relative border border-cyan-900/50">
+          <div id="timelineFill" class="h-full bg-gradient-to-r from-blue-600 to-[#00D4FF] w-0 transition-all duration-75"></div>
+        </div>
+        <span class="text-xs font-mono text-slate-400 w-10">1:00</span>
+      </div>
+
+      <!-- Playback Buttons & Scene Indicators -->
+      <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2">
+          <button id="playPauseBtn" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-[#00D4FF] text-[#071426] text-xs font-bold hover:opacity-95 transition-all">
+            Play
+          </button>
+          <button id="restartBtn" class="px-3 py-1.5 rounded-lg bg-[#071426] border border-cyan-800 text-xs text-slate-300 hover:text-white transition-colors">
+            Restart
+          </button>
+        </div>
+
+        <!-- Scene Pills -->
+        <div class="hidden sm:flex items-center gap-1.5 text-[10px] font-mono">
+          <button onclick="seekTo(0)" class="scene-pill px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800" data-scene="1">1. Problem (0-10s)</button>
+          <button onclick="seekTo(10)" class="scene-pill px-2 py-0.5 rounded bg-[#071426] text-slate-400 border border-slate-800" data-scene="2">2. Ingestion (10-22s)</button>
+          <button onclick="seekTo(22)" class="scene-pill px-2 py-0.5 rounded bg-[#071426] text-slate-400 border border-slate-800" data-scene="3">3. Contradictions (22-35s)</button>
+          <button onclick="seekTo(35)" class="scene-pill px-2 py-0.5 rounded bg-[#071426] text-slate-400 border border-slate-800" data-scene="4">4. Verification (35-48s)</button>
+          <button onclick="seekTo(48)" class="scene-pill px-2 py-0.5 rounded bg-[#071426] text-slate-400 border border-slate-800" data-scene="5">5. Graph & Reports (48-60s)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('videoCanvas');
+    const ctx = canvas.getContext('2d');
+    const playOverlay = document.getElementById('playOverlay');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const timelineFill = document.getElementById('timelineFill');
+    const currentTimeLabel = document.getElementById('currentTimeLabel');
+    const timelineTrack = document.getElementById('timelineTrack');
+    const ccBar = document.getElementById('ccBar');
+    const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+    const recordBtn = document.getElementById('recordBtn');
+
+    const TOTAL_DURATION = 60; // 60 seconds
+    let currentTime = 0;
+    let isPlaying = false;
+    let lastTimestamp = null;
+    let voiceEnabled = true;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    // 5 Story Scenes
+    const SCENES = [
+      {
+        start: 0,
+        end: 10,
+        id: 1,
+        title: "The Problem & Opening Identity",
+        subtitle: "Corporate filings hide conflicting numbers, outdated facts, and unsupported claims.",
+        narration: "Welcome to TRUVEXA AI. When making high-stakes decisions from dense reports, organizations frequently suffer from contradictory figures and unverified assertions."
+      },
+      {
+        start: 10,
+        end: 22,
+        id: 2,
+        title: "Multi-PDF Ingestion & Page-Level Chunking",
+        subtitle: "Zero-hallucination processing: text extraction, pagination, and vector indexing.",
+        narration: "TRUVEXA AI solves this. Upload multiple PDFs simultaneously. Our engine parses pages, preserves coordinates, and indexes vector chunks with zero hallucinations."
+      },
+      {
+        start: 22,
+        end: 35,
+        id: 3,
+        title: "Cross-Document Contradiction Explorer",
+        subtitle: "Automated conflict discovery: Side-by-side revenue, budget, and timeline audits.",
+        narration: "Our flagship Contradiction Explorer automatically flags cross-document discrepancies, comparing revenue figures, budgets, and timelines side-by-side with line citations."
+      },
+      {
+        start: 35,
+        end: 48,
+        id: 4,
+        title: "Claim Verification & Instant Citation Jumps",
+        subtitle: "Classifies claims as Supported or Contradicted, jumping straight into the PDF viewer.",
+        narration: "Test any factual statement in the Claim Verification Engine. Every verdict links directly to verified PDF pages, with instant jump-to-page citation highlighting."
+      },
+      {
+        start: 48,
+        end: 60,
+        id: 5,
+        title: "Topological Evidence Graph & Reports",
+        subtitle: "Interactive relationship nodes and downloadable intelligence reports in PDF & CSV.",
+        narration: "Explore the interactive evidence graph, and export comprehensive audit intelligence reports to PDF or CSV. TRUVEXA AI: Every claim deserves evidence."
+      }
+    ];
+
+    let currentSceneIndex = 0;
+    let activeUtterance = null;
+
+    // Speech Synthesis Narration
+    function speakNarration(text) {
+      if (!voiceEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.0;
+      activeUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function stopNarration() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    // Main Canvas Render Loop
+    function render(time) {
+      const scene = SCENES.find(s => time >= s.start && time < s.end) || SCENES[SCENES.length - 1];
+      const sceneProgress = (time - scene.start) / (scene.end - scene.start);
+
+      // Background Gradient
+      const grad = ctx.createLinearGradient(0, 0, 1280, 720);
+      grad.addColorStop(0, '#071426');
+      grad.addColorStop(0.5, '#0B1F38');
+      grad.addColorStop(1, '#040D1A');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Background Subtle Constellation
+      drawConstellation(time);
+
+      // Render Scene specific animation
+      if (scene.id === 1) renderScene1(sceneProgress, time);
+      else if (scene.id === 2) renderScene2(sceneProgress, time);
+      else if (scene.id === 3) renderScene3(sceneProgress, time);
+      else if (scene.id === 4) renderScene4(sceneProgress, time);
+      else if (scene.id === 5) renderScene5(sceneProgress, time);
+
+      // Header watermark badge
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(40, 35, 180, 36, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 15px monospace';
+      ctx.fillText('TRUVEXA ', 55, 58);
+      ctx.fillStyle = '#00D4FF';
+      ctx.fillText('AI', 135, 58);
+      ctx.restore();
+
+      // Timestamp & Scene Pill on top right
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(`SCENE 0${scene.id} / 05 · ${formatTime(time)}`, 1240, 58);
+      ctx.restore();
+    }
+
+    function drawConstellation(t) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.08)';
+      ctx.lineWidth = 1;
+      const pts = [
+        [150, 200], [400, 150], [900, 180], [1100, 280],
+        [300, 600], [600, 650], [950, 580], [1150, 620]
+      ];
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i][0] - pts[j][0];
+          const dy = pts[i][1] - pts[j][1];
+          if (Math.hypot(dx, dy) < 400) {
+            ctx.moveTo(pts[i][0], pts[i][1]);
+            ctx.lineTo(pts[j][0], pts[j][1]);
+          }
+        }
+      }
+      ctx.stroke();
+
+      pts.forEach((p, idx) => {
+        ctx.fillStyle = idx % 2 === 0 ? '#00D4FF' : '#2563EB';
+        ctx.beginPath();
+        ctx.arc(p[0] + Math.sin(t + idx) * 5, p[1] + Math.cos(t + idx) * 5, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // SCENE 1: Brand Reveal & The Core Problem
+    function renderScene1(prog, t) {
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      // Animated Glowing Central Shield Logo
+      const pulse = 1 + Math.sin(t * 3) * 0.05;
+      ctx.translate(640, 260);
+      ctx.scale(pulse, pulse);
+
+      ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+      ctx.strokeStyle = '#00D4FF';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(-70, -70, 140, 140, 24);
+      ctx.fill();
+      ctx.stroke();
+
+      // Shield Check Icon
+      ctx.fillStyle = '#00D4FF';
+      ctx.font = 'bold 64px sans-serif';
+      ctx.fillText('🛡️', 0, 22);
+
+      ctx.restore();
+
+      // Title Typography
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 48px sans-serif';
+      ctx.fillText('TRUVEXA ', 610, 410);
+      ctx.fillStyle = '#00D4FF';
+      ctx.fillText('AI', 730, 410);
+
+      // Tagline
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = '600 22px sans-serif';
+      ctx.fillText('Every Claim Deserves Evidence.', 640, 460);
+
+      // Problem Cards
+      ctx.font = '15px sans-serif';
+      ctx.fillStyle = '#EF4444';
+      ctx.fillText('⚠️ Contradictory Numbers   ·   ⚠️ Outdated Filing Dates   ·   ⚠️ Phantom AI Hallucinations', 640, 530);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '14px monospace';
+      ctx.fillText('THE SOLUTION: SOURCE-GROUNDED DOCUMENT INTELLIGENCE', 640, 580);
+    }
+
+    // SCENE 2: Multi-PDF Upload & Ingestion
+    function renderScene2(prog, t) {
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      ctx.fillStyle = '#00D4FF';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('PIPELINE STAGE 1: MULTI-PDF PARSING & CHUNKING', 640, 140);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('Ingest Up To 10 Filings Simultaneously', 640, 185);
+
+      // Three Animated Document Cards
+      const docs = [
+        { name: 'ApexCorp_Annual_Report_2024.pdf', pages: 3, chunks: 3, x: 260 },
+        { name: 'ApexCorp_Strategic_Review_2025.pdf', pages: 3, chunks: 3, x: 640 },
+        { name: 'CloudScale_Security_Policy.pdf', pages: 2, chunks: 2, x: 1020 }
+      ];
+
+      docs.forEach((doc, idx) => {
+        const yOffset = Math.sin(t * 2 + idx) * 8;
+        ctx.fillStyle = '#0B1F38';
+        ctx.strokeStyle = idx === 1 ? '#00D4FF' : '#2563EB';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(doc.x - 160, 250 + yOffset, 320, 220, 16);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#00D4FF';
+        ctx.font = '36px sans-serif';
+        ctx.fillText('📄', doc.x, 310 + yOffset);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(doc.name, doc.x, 350 + yOffset);
+
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '12px monospace';
+        ctx.fillText(`${doc.pages} Pages · ${doc.chunks} Vector Chunks`, doc.x, 380 + yOffset);
+
+        // Progress bar on each card
+        ctx.fillStyle = '#071426';
+        ctx.beginPath();
+        ctx.roundRect(doc.x - 120, 410 + yOffset, 240, 8, 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#10B981';
+        ctx.beginPath();
+        ctx.roundRect(doc.x - 120, 410 + yOffset, 240 * Math.min(1, prog * 1.5), 8, 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#10B981';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('✓ ZERO-HALLUCINATION EMBEDDED', doc.x, 440 + yOffset);
+      });
+
+      ctx.restore();
+    }
+
+    // SCENE 3: Cross-Document Contradiction Explorer
+    function renderScene3(prog, t) {
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      ctx.fillStyle = '#EF4444';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('CORE DIFFERENTIATOR: CROSS-DOCUMENT AUDIT', 640, 130);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('Automatic Side-by-Side Contradiction Detection', 640, 175);
+
+      // Side-by-Side Comparison Box
+      // Left Card: Doc A
+      ctx.fillStyle = '#071426';
+      ctx.strokeStyle = '#2563EB';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(140, 220, 450, 260, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#60A5FA';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('DOCUMENT A: Annual_Report_2024.pdf (Pg 1)', 165, 260);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('Reported Revenue: ₹120 Crore', 165, 305);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'italic 13px serif';
+      ctx.fillText('"Total reported annual revenue reached ₹120 Crore,', 165, 350);
+      ctx.fillText('representing an increase of 25% year-over-year."', 165, 375);
+
+      // VS Badge in Center
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#EF4444';
+      ctx.beginPath();
+      ctx.arc(640, 350, 32, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 18px sans-serif';
+      ctx.fillText('VS', 640, 356);
+
+      // Right Card: Doc B (Contradicting)
+      ctx.fillStyle = '#071426';
+      ctx.strokeStyle = '#EF4444';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(690, 220, 450, 260, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#F87171';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText('DOCUMENT B: Strategic_Review_2025.pdf (Pg 1)', 715, 260);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('Revised Revenue: ₹105 Crore', 715, 305);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'italic 13px serif';
+      ctx.fillText('"Reconciled annual revenue for 2024 was certified', 715, 350);
+      ctx.fillText('at ₹105 Crore after software deferral credits."', 715, 375);
+
+      // Bottom AI Explanation Banner
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+      ctx.beginPath();
+      ctx.roundRect(140, 505, 1000, 70, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#FCA5A5';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('⚠️ AI CONTRADICTION RATIONALE:', 165, 532);
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('Unresolved ₹15 Cr variance detected across consecutive fiscal disclosures. Review actions: [Mark Confirmed] [Add Note]', 165, 555);
+
+      ctx.restore();
+    }
+
+    // SCENE 4: Claim Verification & PDF Highlighting
+    function renderScene4(prog, t) {
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      ctx.fillStyle = '#10B981';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('PIPELINE STAGE 3: CLAIM VERIFICATION & CITATIONS', 640, 130);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('Every Verdict Anchored In Line-Level Citations', 640, 175);
+
+      // Left Input Claim Box
+      ctx.fillStyle = '#0B1F38';
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(140, 220, 480, 320, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText('USER ASSERTION TO VERIFY:', 170, 260);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('"The company annual revenue', 170, 300);
+      ctx.fillText('reached ₹120 Crore in 2024."', 170, 330);
+
+      // Green Badge
+      ctx.fillStyle = '#065F46';
+      ctx.beginPath();
+      ctx.roundRect(170, 370, 280, 40, 20);
+      ctx.fill();
+      ctx.fillStyle = '#34D399';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('✓ SUPPORTED BY EVIDENCE', 195, 395);
+
+      ctx.fillStyle = '#A7F3D0';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('Source: ApexCorp_Annual_Report_2024.pdf (Page 1)', 170, 450);
+      ctx.fillText('Passage: "Total reported revenue reached ₹120 Cr..."', 170, 480);
+
+      // Right: Simulated PDF Viewer Page with Highlight
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(660, 220, 480, 320, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#334155';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('INTEGRATED PDF VIEWER · PAGE 1', 690, 260);
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '13px serif';
+      ctx.fillText('ApexCorp Financial Disclosures for Operating Year 2024.', 690, 300);
+
+      // Yellow/Cyan Highlight box
+      ctx.fillStyle = '#FEF08A';
+      ctx.fillRect(685, 325, 430, 45);
+
+      ctx.fillStyle = '#854D0E';
+      ctx.font = 'bold 13px serif';
+      ctx.fillText('Total reported annual revenue reached ₹120 Crore,', 695, 345);
+      ctx.fillText('representing an increase of 25% year-over-year.', 695, 362);
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '13px serif';
+      ctx.fillText('The core enterprise division contributed 65% of proceeds.', 690, 405);
+      ctx.fillText('Capital expenditures prioritized cloud modernization.', 690, 435);
+
+      ctx.fillStyle = '#0284C7';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText('TRUVEXA CITATION JUMP: VERIFIED ANCHOR', 690, 500);
+
+      ctx.restore();
+    }
+
+    // SCENE 5: Topological Evidence Graph & Exportable Reports
+    function renderScene5(prog, t) {
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      ctx.fillStyle = '#00D4FF';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('ENTERPRISE GRADE · PRODUCTION READY', 640, 120);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText('Interactive Evidence Graph & Intelligence Reports', 640, 165);
+
+      // Graph Visual in Left
+      ctx.fillStyle = '#071426';
+      ctx.strokeStyle = '#00D4FF';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(140, 210, 460, 300, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Nodes & Edges
+      const n1 = { x: 230, y: 310, label: 'Doc 2024', col: '#2563EB' };
+      const n2 = { x: 230, y: 430, label: 'Doc 2025', col: '#2563EB' };
+      const n3 = { x: 400, y: 280, label: '₹120 Cr', col: '#10B981' };
+      const n4 = { x: 400, y: 440, label: 'Conflict', col: '#EF4444' };
+      const n5 = { x: 520, y: 360, label: 'Titan Q4', col: '#F59E0B' };
+
+      // Edges
+      ctx.strokeStyle = '#10B981';
+      ctx.beginPath(); ctx.moveTo(n1.x, n1.y); ctx.lineTo(n3.x, n3.y); ctx.stroke();
+      ctx.strokeStyle = '#EF4444';
+      ctx.beginPath(); ctx.moveTo(n1.x, n1.y); ctx.lineTo(n4.x, n4.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(n2.x, n2.y); ctx.lineTo(n4.x, n4.y); ctx.stroke();
+      ctx.strokeStyle = '#00D4FF';
+      ctx.beginPath(); ctx.moveTo(n2.x, n2.y); ctx.lineTo(n5.x, n5.y); ctx.stroke();
+
+      [n1, n2, n3, n4, n5].forEach(n => {
+        ctx.fillStyle = n.col;
+        ctx.beginPath(); ctx.arc(n.x, n.y, 20, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(n.label, n.x, n.y + 35);
+      });
+
+      // Right Box: Official Report Generator
+      ctx.fillStyle = '#0B1F38';
+      ctx.strokeStyle = '#2563EB';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(640, 210, 500, 300, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#00D4FF';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillText('TRUVEXA Evidence Intelligence Report', 670, 255);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '12px monospace';
+      ctx.fillText('Generated with verified citations & discrepancy tables.', 670, 285);
+
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = '13px sans-serif';
+      ctx.fillText('• 2 Audited Filings Reconciled', 670, 325);
+      ctx.fillText('• 3 Factual Contradictions Documented', 670, 355);
+      ctx.fillText('• Exportable in 1-Click to CSV & PDF Formats', 670, 385);
+
+      // Download Buttons Visual
+      ctx.fillStyle = '#10B981';
+      ctx.beginPath();
+      ctx.roundRect(670, 420, 140, 36, 8);
+      ctx.fill();
+      ctx.fillStyle = '#071426';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText('📥 Export CSV', 695, 443);
+
+      ctx.fillStyle = '#2563EB';
+      ctx.beginPath();
+      ctx.roundRect(830, 420, 140, 36, 8);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('🖨️ Print / PDF', 860, 443);
+
+      // Final Call To Action
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#00D4FF';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('TRUVEXA AI · LIVE ON LOCALHOST:3000 · GITHUB REPOSITORY READY', 640, 560);
+
+      ctx.restore();
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    // Animation Tick
+    function tick(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const delta = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      if (isPlaying) {
+        currentTime += delta;
+        if (currentTime >= TOTAL_DURATION) {
+          currentTime = TOTAL_DURATION;
+          pause();
+        }
+
+        // Check Scene Change for Narration
+        const currentScene = SCENES.find(s => currentTime >= s.start && currentTime < s.end);
+        if (currentScene && currentScene.id !== currentSceneIndex) {
+          currentSceneIndex = currentScene.id;
+          ccBar.innerText = currentScene.narration;
+          updateScenePills(currentScene.id);
+          speakNarration(currentScene.narration);
+        }
+
+        // Update Timeline UI
+        timelineFill.style.width = `${(currentTime / TOTAL_DURATION) * 100}%`;
+        currentTimeLabel.innerText = formatTime(currentTime);
+      }
+
+      render(currentTime);
+
+      if (isPlaying || currentTime < TOTAL_DURATION) {
+        requestAnimationFrame(tick);
+      }
+    }
+
+    function updateScenePills(activeId) {
+      document.querySelectorAll('.scene-pill').forEach(pill => {
+        if (parseInt(pill.dataset.scene) === activeId) {
+          pill.className = 'scene-pill px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold';
+        } else {
+          pill.className = 'scene-pill px-2 py-0.5 rounded bg-[#071426] text-slate-400 border border-slate-800';
+        }
+      });
+    }
+
+    function play() {
+      isPlaying = true;
+      playOverlay.classList.add('opacity-0', 'pointer-events-none');
+      playPauseBtn.innerText = 'Pause';
+      lastTimestamp = null;
+
+      const currentScene = SCENES.find(s => currentTime >= s.start && currentTime < s.end);
+      if (currentScene) {
+        currentSceneIndex = currentScene.id;
+        ccBar.innerText = currentScene.narration;
+        updateScenePills(currentScene.id);
+        speakNarration(currentScene.narration);
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    function pause() {
+      isPlaying = false;
+      playOverlay.classList.remove('opacity-0', 'pointer-events-none');
+      playPauseBtn.innerText = 'Play';
+      stopNarration();
+    }
+
+    function seekTo(timeSec) {
+      currentTime = Math.max(0, Math.min(TOTAL_DURATION, timeSec));
+      timelineFill.style.width = `${(currentTime / TOTAL_DURATION) * 100}%`;
+      currentTimeLabel.innerText = formatTime(currentTime);
+      render(currentTime);
+
+      const scene = SCENES.find(s => currentTime >= s.start && currentTime < s.end);
+      if (scene) {
+        currentSceneIndex = scene.id;
+        ccBar.innerText = scene.narration;
+        updateScenePills(scene.id);
+        if (isPlaying) {
+          speakNarration(scene.narration);
+        }
+      }
+    }
+
+    // Event Listeners
+    playOverlay.addEventListener('click', play);
+    playPauseBtn.addEventListener('click', () => {
+      if (isPlaying) pause();
+      else play();
+    });
+
+    restartBtn.addEventListener('click', () => {
+      seekTo(0);
+      play();
+    });
+
+    timelineTrack.addEventListener('click', (e) => {
+      const rect = timelineTrack.getBoundingClientRect();
+      const clickRatio = (e.clientX - rect.left) / rect.width;
+      seekTo(clickRatio * TOTAL_DURATION);
+    });
+
+    voiceToggleBtn.addEventListener('click', () => {
+      voiceEnabled = !voiceEnabled;
+      document.getElementById('voiceLabel').innerText = voiceEnabled ? 'Voiceover: ON' : 'Voiceover: MUTED';
+      document.getElementById('voiceIcon').innerText = voiceEnabled ? '🔊' : '🔇';
+      if (!voiceEnabled) stopNarration();
+    });
+
+    // 1-Click MediaRecorder Video Export (.webm file download)
+    recordBtn.addEventListener('click', async () => {
+      if (isRecording) {
+        mediaRecorder.stop();
+        return;
+      }
+
+      try {
+        const stream = canvas.captureStream(30); // 30 FPS stream
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'TRUVEXA_AI_60s_Explainer.webm';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          isRecording = false;
+          recordBtn.className = 'px-3 py-1 text-xs rounded-lg bg-rose-950 border border-rose-500/50 text-rose-300 hover:bg-rose-900/60 transition-colors flex items-center gap-1.5 font-medium';
+          document.getElementById('recordLabel').innerText = 'Export Video File';
+          alert('TRUVEXA AI 60-Second Video exported and downloaded successfully!');
+        };
+
+        isRecording = true;
+        recordBtn.className = 'px-3 py-1 text-xs rounded-lg bg-emerald-950 border border-emerald-500/50 text-emerald-300 font-bold animate-pulse flex items-center gap-1.5';
+        document.getElementById('recordLabel').innerText = 'Recording Video...';
+
+        // Restart from 0 and play to record full 60 seconds
+        seekTo(0);
+        play();
+        mediaRecorder.start();
+
+        // Automatically stop recording when reaching 60s
+        setTimeout(() => {
+          if (isRecording && mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        }, 61000);
+
+      } catch (err) {
+        console.error('MediaRecorder error:', err);
+        alert('Browser screen recording supported in Chrome/Edge/Firefox.');
+      }
+    });
+
+    // Initial Frame Render
+    render(0);
+    seekTo(0);
+  </script>
+</body>
+</html>
